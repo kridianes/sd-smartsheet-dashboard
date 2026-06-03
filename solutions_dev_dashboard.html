@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solutions Development — Project Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg: #f7f6f2;
+  --surface: #ffffff;
+  --surface2: #f0ede6;
+  --border: rgba(0,0,0,0.08);
+  --border-strong: rgba(0,0,0,0.14);
+  --text-primary: #1a1916;
+  --text-secondary: #6b6860;
+  --text-tertiary: #a09d97;
+  --accent: #1a4f8a;
+  --accent-light: #e8f0fa;
+  --green: #2d7a4f;
+  --green-light: #e6f5ed;
+  --amber: #956000;
+  --amber-light: #fdf3dc;
+  --red: #b03030;
+  --red-light: #fce8e8;
+  --purple: #5240b8;
+  --purple-light: #eeedfb;
+  --gray-badge: #5f5e5a;
+  --gray-badge-bg: #f0ede6;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --font: 'DM Sans', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* LAYOUT */
+.shell { display: flex; height: 100vh; overflow: hidden; }
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow-y: auto;
+}
+.main { flex: 1; overflow-y: auto; background: var(--bg); }
+.content { padding: 2rem; max-width: 1100px; }
+
+/* SIDEBAR */
+.sidebar-brand {
+  padding: 1.25rem 1.25rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.brand-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 4px;
+}
+.brand-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+.sidebar-section {
+  padding: .75rem 1rem .25rem;
+}
+.sidebar-section-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  padding: 0 .25rem;
+  margin-bottom: 4px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 13px;
+  transition: background .12s, color .12s;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+.nav-item:hover { background: var(--surface2); color: var(--text-primary); }
+.nav-item.active { background: var(--accent-light); color: var(--accent); font-weight: 500; }
+.nav-item i { font-size: 16px; flex-shrink: 0; }
+.sidebar-footer {
+  margin-top: auto;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--border);
+}
+.last-updated {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.status-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+}
+
+/* HEADER */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.page-title { font-size: 20px; font-weight: 500; color: var(--text-primary); }
+.page-sub { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+.header-badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* BADGES */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.bg-green { background: var(--green-light); color: var(--green); }
+.bg-amber { background: var(--amber-light); color: var(--amber); }
+.bg-red { background: var(--red-light); color: var(--red); }
+.bg-blue { background: var(--accent-light); color: var(--accent); }
+.bg-purple { background: var(--purple-light); color: var(--purple); }
+.bg-gray { background: var(--gray-badge-bg); color: var(--gray-badge); }
+
+/* METRICS */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 1.5rem;
+}
+.metric-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+.metric-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 6px;
+}
+.metric-value {
+  font-size: 26px;
+  font-weight: 300;
+  color: var(--text-primary);
+  line-height: 1;
+  font-family: var(--font-mono);
+}
+.metric-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 5px; }
+.metric-bar { height: 3px; background: var(--border); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+.metric-bar-fill { height: 100%; border-radius: 2px; background: var(--green); }
+
+/* VIEWS */
+.view { display: none; }
+.view.active { display: block; animation: fadeIn .2s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+/* PROJECT CARDS */
+.proj-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 1.5rem; }
+.proj-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow .15s;
+}
+.proj-card:hover { box-shadow: var(--shadow-md); }
+.proj-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; gap: 10px; }
+.proj-card-icon {
+  width: 36px; height: 36px;
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 18px;
+}
+.proj-card-icon.cloud { background: var(--accent-light); color: var(--accent); }
+.proj-card-icon.workplace { background: var(--green-light); color: var(--green); }
+.proj-card-name { font-size: 14px; font-weight: 500; color: var(--text-primary); flex: 1; }
+.proj-card-desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+.proj-stat-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+.proj-stat-row span:first-child { color: var(--text-secondary); }
+.proj-stat-row span:last-child { font-weight: 500; font-family: var(--font-mono); }
+.prog-bar { height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin: 6px 0 12px; }
+.prog-fill { height: 100%; border-radius: 3px; background: var(--green); transition: width .5s ease; }
+.proj-footer {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.proj-meta { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-secondary); }
+.proj-meta i { font-size: 13px; }
+
+/* SECTION HEADER */
+.section-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.section-title {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.count-pill {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  background: var(--surface2);
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+}
+
+/* FILTER ROW */
+.filter-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+.filter-row select {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 5px 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--surface);
+  cursor: pointer;
+  font-family: var(--font);
+  transition: border-color .12s;
+}
+.filter-row select:hover { border-color: var(--accent); }
+.reset-btn {
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 5px 11px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-family: var(--font);
+  display: flex; align-items: center; gap: 4px;
+  transition: all .12s;
+}
+.reset-btn:hover { background: var(--surface2); color: var(--text-primary); }
+
+/* TABLE */
+.table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.tt { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tt th {
+  text-align: left;
+  font-weight: 500;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding: 10px 14px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+.tt td {
+  padding: 10px 14px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.tt tr:last-child td { border-bottom: none; }
+.tt tbody tr { transition: background .1s; }
+.tt tbody tr:hover td { background: #fafaf7; }
+.task-name { font-size: 13px; max-width: 230px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.empty-state {
+  padding: 2.5rem;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 13px;
+}
+.count-lbl { font-size: 12px; color: var(--text-tertiary); margin-bottom: 10px; font-family: var(--font-mono); }
+
+/* RAID SUMMARY CARDS */
+.raid-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+.raid-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: .875rem 1rem;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+.raid-num { font-size: 24px; font-weight: 300; font-family: var(--font-mono); }
+.raid-lbl { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; }
+
+/* CHARTS */
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 1.25rem; }
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-sm);
+}
+.chart-title {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 12px;
+}
+.legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-secondary); }
+.legend-dot { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
+
+/* DEADLINE TIMELINE */
+.timeline { display: flex; flex-direction: column; gap: 8px; }
+.tl-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--border-strong);
+  transition: border-color .15s;
+}
+.tl-item:hover { border-left-color: var(--accent); }
+.tl-date { font-size: 12px; font-weight: 500; font-family: var(--font-mono); color: var(--accent); min-width: 55px; }
+.tl-name { font-size: 12px; color: var(--text-primary); flex: 1; }
+.tl-proj { font-size: 11px; color: var(--text-tertiary); }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .shell { flex-direction: column; height: auto; }
+  .sidebar { width: 100%; height: auto; flex-direction: row; flex-wrap: wrap; }
+  .metrics-grid { grid-template-columns: repeat(3, 1fr); }
+  .proj-grid, .charts-grid { grid-template-columns: 1fr; }
+  .raid-summary { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 600px) {
+  .metrics-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar" aria-label="Dashboard navigation">
+    <div class="sidebar-brand">
+      <div class="brand-label"><i class="ti ti-building" style="font-size:11px;vertical-align:-1px;margin-right:3px"></i>Solutions Development</div>
+      <div class="brand-name">Project Dashboard</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Views</div>
+      <button class="nav-item active" onclick="showView('overview',this)">
+        <i class="ti ti-layout-cards" aria-hidden="true"></i>Overview
+      </button>
+      <button class="nav-item" onclick="showView('tasks',this)">
+        <i class="ti ti-checkbox" aria-hidden="true"></i>Tasks
+      </button>
+      <button class="nav-item" onclick="showView('raid',this)">
+        <i class="ti ti-alert-triangle" aria-hidden="true"></i>RAID log
+      </button>
+      <button class="nav-item" onclick="showView('charts',this)">
+        <i class="ti ti-chart-bar" aria-hidden="true"></i>Charts
+      </button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Projects</div>
+      <button class="nav-item" onclick="jumpToProject('cloud')">
+        <i class="ti ti-cloud" aria-hidden="true"></i>Azure Backup Ph.2
+      </button>
+      <button class="nav-item" onclick="jumpToProject('wls')">
+        <i class="ti ti-shield-check" aria-hidden="true"></i>WLS+ Secure Score
+      </button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Quick links</div>
+      <a class="nav-item" href="https://app.smartsheet.com/sheets/5qw2x5gwXq2VJjP7989Mf63CG8QWgjGpXjHjWHf1" target="_blank">
+        <i class="ti ti-table" aria-hidden="true"></i>Project Plan <i class="ti ti-external-link" style="font-size:11px;margin-left:auto;opacity:.5"></i>
+      </a>
+      <a class="nav-item" href="https://app.smartsheet.com/sheets/43GrMJ82hvHmPQFhxxQ83m4G9qXqWwcGMwJp8fX1" target="_blank">
+        <i class="ti ti-list-check" aria-hidden="true"></i>RAID Log <i class="ti ti-external-link" style="font-size:11px;margin-left:auto;opacity:.5"></i>
+      </a>
+      <a class="nav-item" href="https://app.smartsheet.com/sheets/qXGhMJj4hHf9rhCjVQfXXJq8P4Vh2HXq74MmCmR1" target="_blank">
+        <i class="ti ti-report" aria-hidden="true"></i>Portfolio Summary <i class="ti ti-external-link" style="font-size:11px;margin-left:auto;opacity:.5"></i>
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="last-updated">
+        <span class="status-dot"></span>
+        Data as of June 3, 2026
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+    <div class="content">
+
+      <div class="page-header">
+        <div>
+          <div class="page-title">Cloud &amp; Workplace SPF — June 2026</div>
+          <div class="page-sub">Jun 1 – Jun 26, 2026 &nbsp;·&nbsp; Solutions Development workspace</div>
+        </div>
+        <div class="header-badges">
+          <span class="badge bg-green"><i class="ti ti-circle-filled" style="font-size:8px"></i>On track</span>
+          <span class="badge bg-blue">Executing</span>
+          <span class="badge bg-gray"><i class="ti ti-calendar" style="font-size:11px"></i>23 days left</span>
+        </div>
+      </div>
+
+      <!-- METRICS -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Projects</div>
+          <div class="metric-value">2</div>
+          <div class="metric-sub">Active</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Total tasks</div>
+          <div class="metric-value">25</div>
+          <div class="metric-sub">Across both projects</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Completed</div>
+          <div class="metric-value" style="color:var(--green)">3</div>
+          <div class="metric-sub">12% complete</div>
+          <div class="metric-bar"><div class="metric-bar-fill" style="width:12%"></div></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">In progress</div>
+          <div class="metric-value" style="color:var(--accent)">4</div>
+          <div class="metric-sub">Active right now</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">RAID items</div>
+          <div class="metric-value" style="color:var(--amber)">2</div>
+          <div class="metric-sub">Both closed</div>
+        </div>
+      </div>
+
+      <!-- OVERVIEW VIEW -->
+      <div class="view active" id="view-overview">
+        <div class="proj-grid">
+          <div class="proj-card" id="card-cloud">
+            <div class="proj-card-header">
+              <div class="proj-card-icon cloud"><i class="ti ti-cloud" aria-hidden="true"></i></div>
+              <div style="flex:1">
+                <div class="proj-card-name">Azure Backup Phase 2</div>
+                <div class="proj-card-desc">Cloud (Azure Backup Phase 2)</div>
+              </div>
+              <span class="badge bg-green">On track</span>
+            </div>
+            <div class="proj-stat-row"><span>Completion</span><span>14%</span></div>
+            <div class="prog-bar"><div class="prog-fill" style="width:14%"></div></div>
+            <div class="proj-stat-row"><span>Completed</span><span>2 of 14</span></div>
+            <div class="proj-stat-row"><span>In progress</span><span>2</span></div>
+            <div class="proj-stat-row"><span>Not started</span><span>4</span></div>
+            <div class="proj-stat-row"><span>Deferred / cancelled</span><span>6</span></div>
+            <div class="proj-footer">
+              <span class="proj-meta"><i class="ti ti-user" aria-hidden="true"></i>Robert Bartnik</span>
+              <span class="proj-meta"><i class="ti ti-calendar-due" aria-hidden="true"></i>Jun 26, 2026</span>
+              <span class="proj-meta"><i class="ti ti-checkbox" aria-hidden="true"></i>14 tasks</span>
+            </div>
+          </div>
+
+          <div class="proj-card" id="card-wls">
+            <div class="proj-card-header">
+              <div class="proj-card-icon workplace"><i class="ti ti-shield-check" aria-hidden="true"></i></div>
+              <div style="flex:1">
+                <div class="proj-card-name">WLS+ Secure Score</div>
+                <div class="proj-card-desc">Workplace (WLS+ Secure Score)</div>
+              </div>
+              <span class="badge bg-green">On track</span>
+            </div>
+            <div class="proj-stat-row"><span>Completion</span><span>9%</span></div>
+            <div class="prog-bar"><div class="prog-fill" style="width:9%"></div></div>
+            <div class="proj-stat-row"><span>Completed</span><span>1 of 11</span></div>
+            <div class="proj-stat-row"><span>In progress</span><span>2</span></div>
+            <div class="proj-stat-row"><span>Not started</span><span>4</span></div>
+            <div class="proj-stat-row"><span>No status yet</span><span>4</span></div>
+            <div class="proj-footer">
+              <span class="proj-meta"><i class="ti ti-users" aria-hidden="true"></i>Hope D., Robert B., Kriza S.</span>
+              <span class="proj-meta"><i class="ti ti-calendar-due" aria-hidden="true"></i>Jun 26, 2026</span>
+              <span class="proj-meta"><i class="ti ti-checkbox" aria-hidden="true"></i>11 tasks</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-hdr">
+          <span class="section-title">Upcoming deadlines</span>
+          <span class="count-pill">9 items</span>
+        </div>
+        <div class="timeline">
+          <div class="tl-item"><span class="tl-date">Jun 5</span><span class="tl-name">ITI admin consent for app registration</span><span class="tl-proj">WLS+ Secure Score</span><span class="badge bg-gray" style="margin-left:auto">Not started</span></div>
+          <div class="tl-item"><span class="tl-date">Jun 5</span><span class="tl-name">WWT review Claude connector</span><span class="tl-proj">WLS+ Secure Score</span><span class="badge bg-gray" style="margin-left:auto">Not started</span></div>
+          <div class="tl-item"><span class="tl-date">Jun 8</span><span class="tl-name">Change CHG0050071 — prod environment setup</span><span class="tl-proj">WLS+ Secure Score</span><span class="badge bg-gray" style="margin-left:auto">Not started</span></div>
+          <div class="tl-item"><span class="tl-date">Jun 9–11</span><span class="tl-name">Submit change — CSC onboarding runbook</span><span class="tl-proj">Azure Backup Ph.2</span><span class="badge bg-gray" style="margin-left:auto">Not started</span></div>
+          <div class="tl-item"><span class="tl-date">Jun 16–18</span><span class="tl-name">Submit change — Fetcher function</span><span class="tl-proj">Azure Backup Ph.2</span><span class="badge bg-gray" style="margin-left:auto">Not started</span></div>
+          <div class="tl-item" style="border-left-color:var(--purple)"><span class="tl-date">Jun 18</span><span class="tl-name">Deployment / Changes Completed</span><span class="tl-proj">Azure Backup Ph.2</span><span class="badge bg-purple" style="margin-left:auto">Milestone</span></div>
+          <div class="tl-item"><span class="tl-date">Jun 19</span><span class="tl-name">Send stakeholder communication on deployed enhancement</span><span class="tl-proj">Azure Backup Ph.2</span><span class="badge bg-gray" style="margin-left:auto">Not started</span></div>
+          <div class="tl-item"><span class="tl-date">Jun 22</span><span class="tl-name">Announce update in Weekly Wire</span><span class="tl-proj">Azure Backup Ph.2</span><span class="badge bg-gray" style="margin-left:auto">Not started</span></div>
+          <div class="tl-item" style="border-left-color:var(--purple)"><span class="tl-date">Jun 23</span><span class="tl-name">Enablement milestone</span><span class="tl-proj">WLS+ Secure Score</span><span class="badge bg-purple" style="margin-left:auto">Milestone</span></div>
+        </div>
+      </div>
+
+      <!-- TASKS VIEW -->
+      <div class="view" id="view-tasks">
+        <div class="filter-row">
+          <i class="ti ti-filter" style="font-size:14px;color:var(--text-tertiary)" aria-hidden="true"></i>
+          <select id="f-proj" onchange="renderTasks()">
+            <option value="">All projects</option>
+            <option value="Cloud (Azure Backup Phase 2)">Azure Backup Phase 2</option>
+            <option value="Workplace (WLS+ Secure Score)">WLS+ Secure Score</option>
+          </select>
+          <select id="f-type" onchange="renderTasks()">
+            <option value="">All types</option>
+            <option>Task</option><option>Deliverable</option><option>Milestone</option>
+          </select>
+          <select id="f-status" onchange="renderTasks()">
+            <option value="">All statuses</option>
+            <option>Not Started</option><option>In Progress</option><option>Completed</option>
+            <option>Blocked</option><option>Deferred</option><option>Cancelled</option>
+          </select>
+          <select id="f-assignee" onchange="renderTasks()">
+            <option value="">All assignees</option>
+            <option>Robert Bartnik</option><option>Hope Dudusola</option>
+            <option>Kriza Sy</option><option>Unassigned</option>
+          </select>
+          <button class="reset-btn" onclick="clearTaskFilters()">
+            <i class="ti ti-refresh" style="font-size:12px" aria-hidden="true"></i>Reset
+          </button>
+        </div>
+        <div class="count-lbl" id="task-count-lbl"></div>
+        <div class="table-wrap">
+          <table class="tt" id="task-table">
+            <thead>
+              <tr>
+                <th>Task</th><th>Type</th><th>Project</th>
+                <th>Assignee</th><th>Due</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="task-body"></tbody>
+          </table>
+          <div class="empty-state" id="task-empty" style="display:none">
+            <i class="ti ti-mood-empty" style="font-size:24px;display:block;margin-bottom:8px;opacity:.4"></i>
+            No tasks match the selected filters.
+          </div>
+        </div>
+      </div>
+
+      <!-- RAID VIEW -->
+      <div class="view" id="view-raid">
+        <div class="raid-summary">
+          <div class="raid-card"><div class="raid-num" style="color:var(--red)">0</div><div class="raid-lbl">Open risks</div></div>
+          <div class="raid-card"><div class="raid-num" style="color:var(--amber)">0</div><div class="raid-lbl">Open issues</div></div>
+          <div class="raid-card"><div class="raid-num" style="color:var(--accent)">0</div><div class="raid-lbl">Open actions</div></div>
+          <div class="raid-card"><div class="raid-num" style="color:var(--green)">2</div><div class="raid-lbl">Total closed</div></div>
+        </div>
+        <div class="filter-row">
+          <i class="ti ti-filter" style="font-size:14px;color:var(--text-tertiary)" aria-hidden="true"></i>
+          <select id="f-raid-cat" onchange="renderRaid()">
+            <option value="">All categories</option>
+            <option>Risk</option><option>Issue</option><option>Action</option>
+            <option>Assumption</option><option>Decision</option>
+          </select>
+          <select id="f-raid-status" onchange="renderRaid()">
+            <option value="">All statuses</option>
+            <option>Not Started</option><option>Work in Progress</option>
+            <option>Completed</option><option>Cancelled</option><option>On Hold</option>
+          </select>
+          <button class="reset-btn" onclick="clearRaidFilters()">
+            <i class="ti ti-refresh" style="font-size:12px" aria-hidden="true"></i>Reset
+          </button>
+        </div>
+        <div class="count-lbl" id="raid-count-lbl"></div>
+        <div class="table-wrap">
+          <table class="tt" id="raid-table">
+            <thead>
+              <tr><th>Item</th><th>Category</th><th>Impact</th><th>Trigger</th><th>Related item</th><th>Status</th></tr>
+            </thead>
+            <tbody id="raid-body"></tbody>
+          </table>
+          <div class="empty-state" id="raid-empty" style="display:none">
+            <i class="ti ti-mood-empty" style="font-size:24px;display:block;margin-bottom:8px;opacity:.4"></i>
+            No RAID items match the selected filters.
+          </div>
+        </div>
+      </div>
+
+      <!-- CHARTS VIEW -->
+      <div class="view" id="view-charts">
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-title">Task status — Azure Backup Phase 2</div>
+            <div class="legend">
+              <div class="legend-item"><span class="legend-dot" style="background:#2d7a4f"></span>Completed 2</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#1a4f8a"></span>In progress 2</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#d0cdc6"></span>Not started 4</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#d4830a"></span>Deferred 5</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#b03030"></span>Cancelled 1</div>
+            </div>
+            <div style="position:relative;height:170px">
+              <canvas id="c1" role="img" aria-label="Doughnut chart: Azure Backup task statuses">2 completed, 2 in progress, 4 not started, 5 deferred, 1 cancelled.</canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Task status — WLS+ Secure Score</div>
+            <div class="legend">
+              <div class="legend-item"><span class="legend-dot" style="background:#2d7a4f"></span>Completed 1</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#1a4f8a"></span>In progress 2</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#d0cdc6"></span>Not started 4</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#888"></span>No status 4</div>
+            </div>
+            <div style="position:relative;height:170px">
+              <canvas id="c2" role="img" aria-label="Doughnut chart: WLS+ Secure Score task statuses">1 completed, 2 in progress, 4 not started, 4 no status.</canvas>
+            </div>
+          </div>
+        </div>
+        <div class="chart-card" style="margin-bottom:1.25rem">
+          <div class="chart-title">Tasks by assignee</div>
+          <div class="legend">
+            <div class="legend-item"><span class="legend-dot" style="background:#2d7a4f"></span>Completed</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#1a4f8a"></span>In progress</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#d0cdc6"></span>Other</div>
+          </div>
+          <div style="position:relative;height:180px">
+            <canvas id="c3" role="img" aria-label="Stacked bar chart: tasks by assignee">Robert Bartnik 8, Hope Dudusola 3, Kriza Sy 1, Unassigned 13.</canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Deadline distribution — June 2026</div>
+          <div style="position:relative;height:200px">
+            <canvas id="c4" role="img" aria-label="Bar chart: tasks due by date in June 2026">Deadline counts across June 2026.</canvas>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+const TASKS=[
+  {proj:"Cloud (Azure Backup Phase 2)",type:"Task",name:"Announce update in Weekly Wire",assignee:"Unassigned",status:"Not Started",end:"06/22"},
+  {proj:"Cloud (Azure Backup Phase 2)",type:"Deliverable",name:"Automatic Retries for Failed Backup Jobs",assignee:"Robert Bartnik",status:"Not Started",end:"—"},
+  {proj:"Cloud (Azure Backup Phase 2)",type:"Milestone",name:"Deployment / Changes Completed",assignee:"Unassigned",status:"Not Started",end:"06/18"},
+  {proj:"Cloud (Azure Backup Phase 2)",type:"Task",name:"Discovery on CSC Onboarding",assignee:"Robert Bartnik",status:"Completed",end:"—"},
+  {proj:"Cloud (Azure Backup Phase 2)",type:"Task",name:"Submit change — CSC onboarding runbook",assignee:"Unassigned",status:"Not Started",end:"06/09"},
+  {proj:"Cloud (Azure Backup Phase 2)",type:"Task",name:"Submit change — Fetcher function",assignee:"Unassigned",status:"Not Started",end:"06/16"},
+  {proj:"Cloud (Azure Backup Phase 2)",type:"Task",name:"Sync on CSC Onboarding Impact",assignee:"Robert Bartnik",status:"In Progress",end:"—"},
+  {proj:"Cloud (Azure Backup Phase 2)",type:"Task",name:"Work on Operations parameter (App Dev)",assignee:"Unassigned",status:"In Progress",end:"—"},
+  {proj:"Cloud (Azure Backup Phase 2)",type:"Deliverable",name:"Azure Resource Guard",assignee:"Robert Bartnik",status:"Deferred",end:"—"},
+  {proj:"Cloud (Azure Backup Phase 2)",type:"Task",name:"Finalize Approach — Azure Resource Guard",assignee:"Robert Bartnik",status:"Deferred",end:"—"},
+  {proj:"Cloud (Azure Backup Phase 2)",type:"Deliverable",name:"Backup and Recovery Workshop",assignee:"Robert Bartnik",status:"Deferred",end:"—"},
+  {proj:"Cloud (Azure Backup Phase 2)",type:"Task",name:"Establish Workshop Owner",assignee:"Unassigned",status:"Deferred",end:"—"},
+  {proj:"Cloud (Azure Backup Phase 2)",type:"Task",name:"Workshop Deck and Guide",assignee:"Unassigned",status:"Deferred",end:"—"},
+  {proj:"Cloud (Azure Backup Phase 2)",type:"Milestone",name:"Enablement",assignee:"Unassigned",status:"Cancelled",end:"—"},
+  {proj:"Cloud (Azure Backup Phase 2)",type:"Task",name:"Send stakeholder communication",assignee:"Unassigned",status:"Not Started",end:"06/19"},
+  {proj:"Workplace (WLS+ Secure Score)",type:"Deliverable",name:"Secure Score Programmatic Retrieval",assignee:"Robert Bartnik",status:"In Progress",end:"—"},
+  {proj:"Workplace (WLS+ Secure Score)",type:"Task",name:"AI Component / Smart Recommendation Discovery",assignee:"Hope Dudusola",status:"Completed",end:"—"},
+  {proj:"Workplace (WLS+ Secure Score)",type:"Task",name:"Change CHG0050071 — prod env setup",assignee:"Unassigned",status:"Not Started",end:"06/08"},
+  {proj:"Workplace (WLS+ Secure Score)",type:"Milestone",name:"Deployment Completed",assignee:"Unassigned",status:"Not Started",end:"—"},
+  {proj:"Workplace (WLS+ Secure Score)",type:"Task",name:"Discovery and Finalize Approach",assignee:"Hope Dudusola",status:"In Progress",end:"—"},
+  {proj:"Workplace (WLS+ Secure Score)",type:"Task",name:"Dump Customer Secure Score to Cosmos DB",assignee:"Robert Bartnik",status:"Not Started",end:"—"},
+  {proj:"Workplace (WLS+ Secure Score)",type:"Milestone",name:"Enablement",assignee:"Unassigned",status:"Not Started",end:"06/23"},
+  {proj:"Workplace (WLS+ Secure Score)",type:"Task",name:"ITI admin consent for app registration",assignee:"Unassigned",status:"Not Started",end:"06/05"},
+  {proj:"Workplace (WLS+ Secure Score)",type:"Task",name:"QBR Slide",assignee:"Kriza Sy",status:"Not Started",end:"—"},
+  {proj:"Workplace (WLS+ Secure Score)",type:"Task",name:"WWT review Claude connector",assignee:"Unassigned",status:"Not Started",end:"06/05"},
+];
+const RAID=[
+  {item:"Lack of time and people to complete initial Cloud SPF scope by June",cat:"Risk",impact:"Critical",trigger:"",related:"",status:"Completed"},
+  {item:"Descope Backup and Recovery Workshop and Azure Resource Guard for June deadline",cat:"Action",impact:"High",trigger:"Decision Required",related:"",status:"Completed"},
+];
+
+function tbadge(s){const m={"Completed":"bg-green","In Progress":"bg-blue","Not Started":"bg-gray","Blocked":"bg-red","Deferred":"bg-amber","Cancelled":"bg-red"};return `<span class="badge ${m[s]||'bg-gray'}">${s||'—'}</span>`;}
+function typebadge(t){const m={"Task":"bg-gray","Deliverable":"bg-blue","Milestone":"bg-purple"};return `<span class="badge ${m[t]||'bg-gray'}">${t}</span>`;}
+function catbadge(c){const m={"Risk":"bg-red","Issue":"bg-amber","Action":"bg-blue","Assumption":"bg-gray","Decision":"bg-purple"};return `<span class="badge ${m[c]||'bg-gray'}">${c}</span>`;}
+function impactbadge(i){const m={"Critical":"bg-red","High":"bg-amber","Medium":"bg-gray","Low":"bg-green"};return `<span class="badge ${m[i]||'bg-gray'}">${i||'—'}</span>`;}
+function shortProj(p){return p.includes('Azure')?'Azure Backup Ph.2':'WLS+ Secure Score';}
+
+function showView(name,btn){
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  if(name==='charts') setTimeout(initCharts,60);
+}
+
+function jumpToProject(p){
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-overview').classList.add('active');
+  document.querySelectorAll('.nav-item')[0].classList.add('active');
+  setTimeout(()=>{
+    const el=document.getElementById('card-'+p);
+    if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
+    el.style.outline='2px solid var(--accent)';
+    setTimeout(()=>el.style.outline='',1500);
+  },100);
+}
+
+function renderTasks(){
+  const pv=document.getElementById('f-proj').value;
+  const tv=document.getElementById('f-type').value;
+  const sv=document.getElementById('f-status').value;
+  const av=document.getElementById('f-assignee').value;
+  const list=TASKS.filter(t=>(!pv||t.proj===pv)&&(!tv||t.type===tv)&&(!sv||t.status===sv)&&(!av||t.assignee===av));
+  document.getElementById('task-count-lbl').textContent=`${list.length} task${list.length!==1?'s':''}`;
+  document.getElementById('task-body').innerHTML=list.map(t=>`
+    <tr>
+      <td><div class="task-name" title="${t.name}">${t.name}</div></td>
+      <td>${typebadge(t.type)}</td>
+      <td style="font-size:12px;color:var(--text-secondary)">${shortProj(t.proj)}</td>
+      <td style="font-size:12px">${t.assignee==='Unassigned'?'<span style="color:var(--text-tertiary)">—</span>':t.assignee.split(' ')[0]+' '+t.assignee.split(' ').pop()[0]+'.'}</td>
+      <td style="font-size:12px;font-family:var(--font-mono);color:var(--text-secondary)">${t.end}</td>
+      <td>${tbadge(t.status)}</td>
+    </tr>
+  `).join('');
+  document.getElementById('task-empty').style.display=list.length===0?'block':'none';
+  document.getElementById('task-table').style.display=list.length===0?'none':'table';
+}
+
+function clearTaskFilters(){
+  ['f-proj','f-type','f-status','f-assignee'].forEach(id=>document.getElementById(id).value='');
+  renderTasks();
+}
+
+function renderRaid(){
+  const cv=document.getElementById('f-raid-cat').value;
+  const sv=document.getElementById('f-raid-status').value;
+  const list=RAID.filter(r=>(!cv||r.cat===cv)&&(!sv||r.status===sv));
+  document.getElementById('raid-count-lbl').textContent=`${list.length} item${list.length!==1?'s':''}`;
+  document.getElementById('raid-body').innerHTML=list.map(r=>`
+    <tr>
+      <td style="max-width:240px">${r.item}</td>
+      <td>${catbadge(r.cat)}</td>
+      <td>${impactbadge(r.impact)}</td>
+      <td style="font-size:12px;color:var(--text-secondary)">${r.trigger||'—'}</td>
+      <td style="font-size:12px;color:var(--text-secondary)">${r.related||'—'}</td>
+      <td>${tbadge(r.status)}</td>
+    </tr>
+  `).join('');
+  document.getElementById('raid-empty').style.display=list.length===0?'block':'none';
+  document.getElementById('raid-table').style.display=list.length===0?'none':'table';
+}
+
+function clearRaidFilters(){
+  ['f-raid-cat','f-raid-status'].forEach(id=>document.getElementById(id).value='');
+  renderRaid();
+}
+
+let chartsInited=false;
+function initCharts(){
+  if(chartsInited) return;
+  chartsInited=true;
+  new Chart(document.getElementById('c1'),{type:'doughnut',data:{labels:['Completed','In Progress','Not Started','Deferred','Cancelled'],datasets:[{data:[2,2,4,5,1],backgroundColor:['#2d7a4f','#1a4f8a','#d0cdc6','#d4830a','#b03030'],borderWidth:0,hoverOffset:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.label}: ${c.parsed}`}}}}});
+  new Chart(document.getElementById('c2'),{type:'doughnut',data:{labels:['Completed','In Progress','Not Started','No status'],datasets:[{data:[1,2,4,4],backgroundColor:['#2d7a4f','#1a4f8a','#d0cdc6','#888'],borderWidth:0,hoverOffset:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.label}: ${c.parsed}`}}}}});
+  new Chart(document.getElementById('c3'),{type:'bar',data:{labels:['Robert B.','Hope D.','Kriza S.','Unassigned'],datasets:[{label:'Completed',data:[1,1,0,0],backgroundColor:'#2d7a4f',borderRadius:3,borderWidth:0},{label:'In Progress',data:[2,1,0,1],backgroundColor:'#1a4f8a',borderRadius:3,borderWidth:0},{label:'Other',data:[5,1,1,12],backgroundColor:'#d0cdc6',borderRadius:3,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true,ticks:{color:'#999',font:{size:11}},grid:{display:false}},y:{stacked:true,ticks:{color:'#999',font:{size:11},stepSize:2},grid:{color:'rgba(0,0,0,.05)'}}},plugins:{legend:{display:false},tooltip:{mode:'index'}}}});
+  new Chart(document.getElementById('c4'),{type:'bar',data:{labels:['Jun 5','Jun 8','Jun 9','Jun 16','Jun 18','Jun 19','Jun 22','Jun 23'],datasets:[{label:'Tasks due',data:[2,1,1,1,1,1,1,1],backgroundColor:'#1a4f8a',borderRadius:4,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{color:'#999',font:{size:11}},grid:{display:false}},y:{ticks:{color:'#999',font:{size:11},stepSize:1},grid:{color:'rgba(0,0,0,.05)'}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.y} item${c.parsed.y!==1?'s':''} due`}}}}});
+}
+
+renderTasks();
+renderRaid();
+</script>
+</body>
+</html>
